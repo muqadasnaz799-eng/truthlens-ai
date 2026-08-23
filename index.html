@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>TruthLens AI</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <header class="navbar">
+
+        <div class="brand">
+
+            <div class="logo">
+                <span class="eye-outer">
+                    <span class="lens"></span>
+                </span>
+            </div>
+
+            <span class="brand-name">
+                TruthLens <b>AI</b>
+            </span>
+
+        </div>
+
+
+        <nav>
+            <a href="#home">Home</a>
+            <a href="#how">How It Works</a>
+            <a href="#about">About</a>
+        </nav>
+
+    </header>
+
+
+    <!-- HOME -->
+    <main id="home">
+
+        <section class="hero">
+
+            <div class="ai-label">
+                ✦ TRUTHLENS AI
+            </div>
+
+
+            <h1>
+                Don't Just See It.
+                <span>Verify It.</span>
+            </h1>
+
+
+            <p class="hero-text">
+                Upload an image, news screenshot or video and let
+                AI analyze possible manipulation, AI-generation
+                and authenticity indicators.
+            </p>
+
+
+            <!-- AI UPLOAD BOX -->
+            <div class="upload-card">
+
+                <div class="upload-top">
+
+                    <div class="upload-icon">
+                        ↑
+                    </div>
+
+                    <div>
+
+                        <h2>
+                            Upload your media
+                        </h2>
+
+                        <p>
+                            Drag & drop your file here
+                            or click to upload
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <input
+                    type="file"
+                    id="fileInput"
+                    accept="image/png,image/jpeg,image/webp,video/mp4"
+                    hidden
+                >
+
+
+                <div class="assistant-input">
+
+                    <button
+                        class="plus-btn"
+                        id="uploadButton"
+                        type="button">
+                        +
+                    </button>
+
+
+                    <span id="fileText">
+                        Ask TruthLens to analyze this file
+                    </span>
+
+
+                    <button
+                        class="send-btn"
+                        id="analyzeButton"
+                        type="button">
+
+                        ↑
+
+                    </button>
+
+                </div>
+
+
+                <div class="formats">
+
+                    JPG • PNG • WEBP • MP4
+
+                </div>
+
+            </div>
+
+
+            <!-- QUICK ACTIONS -->
+            <div class="quick-actions">
+
+                <button data-type="image">
+                    ◉ Analyze Image
+                </button>
+
+                <button data-type="news">
+                    ▤ Verify News
+                </button>
+
+                <button data-type="face">
+                    ◯ Check Face
+                </button>
+
+                <button data-type="video">
+                    ▷ Analyze Video
+                </button>
+
+            </div>
+
+
+            <!-- STATUS -->
+            <div class="analysis-types">
+
+                <div>
+                    <span>✦</span>
+                    AI Detection
+                </div>
+
+                <div>
+                    <span>◯</span>
+                    Face Analysis
+                </div>
+
+                <div>
+                    <span>◇</span>
+                    Metadata
+                </div>
+
+                <div>
+                    <span>✓</span>
+                    Fact Check
+                </div>
+
+            </div>
+
+
+            <!-- LOADING -->
+            <div
+                id="loading"
+                class="loading hidden">
+
+                <div class="scan-eye">
+                    <div></div>
+                </div>
+
+                <h2>
+                    Analyzing your media...
+                </h2>
+
+                <p>
+                    TruthLens AI is checking your file.
+                </p>
+
+                <div class="progress-list">
+
+                    <div>
+                        <span>✓</span>
+                        AI Detection
+                    </div>
+
+                    <div>
+                        <span>◌</span>
+                        Face Analysis
+                    </div>
+
+                    <div>
+                        <span>◌</span>
+                        Metadata Analysis
+                    </div>
+
+                    <div>
+                        <span>◌</span>
+                        Fact Checking
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- RESULT -->
+            <div
+                id="result"
+                class="result-card hidden">
+
+                <div class="result-header">
+
+                    <p>
+                        TRUTHLENS ANALYSIS
+                    </p>
+
+                    <h2>
+                        Analysis Result
+                    </h2>
+
+                </div>
+
+
+                <div class="score-circle">
+
+                    <span id="score">
+                        --
+                    </span>
+
+                </div>
+
+
+                <h3 id="status">
+                    Waiting...
+                </h3>
+
+
+                <div class="metrics">
+
+                    <div>
+                        <span>AI Detection</span>
+                        <strong id="fakeScore">--</strong>
+                    </div>
+
+                    <div>
+                        <span>Likely Real</span>
+                        <strong id="realScore">--</strong>
+                    </div>
+
+                    <div>
+                        <span>Face Analysis</span>
+                        <strong>--</strong>
+                    </div>
+
+                    <div>
+                        <span>Metadata</span>
+                        <strong>--</strong>
+                    </div>
+
+                </div>
+
+
+                <div class="explanation">
+
+                    <h3>
+                        Why this result?
+                    </h3>
+
+                    <p id="explanationText">
+                        Your analysis will appear here.
+                    </p>
+
+                </div>
+
+
+                <button
+                    id="againButton"
+                    class="again-button">
+
+                    Analyze Another File
+
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- HOW IT WORKS -->
+        <section
+            id="how"
+            class="section">
+
+            <div class="section-label">
+                HOW IT WORKS
+            </div>
+
+            <h2>
+                From Upload to Insight
+            </h2>
+
+            <p>
+                TruthLens AI analyzes your media through
+                multiple verification stages.
+            </p>
+
+
+            <div class="steps">
+
+                <div class="step">
+
+                    <span>01</span>
+
+                    <h3>
+                        Upload
+                    </h3>
+
+                    <p>
+                        Upload an image, news screenshot
+                        or video.
+                    </p>
+
+                </div>
+
+
+                <div class="step">
+
+                    <span>02</span>
+
+                    <h3>
+                        AI Analysis
+                    </h3>
+
+                    <p>
+                        AI examines your media for
+                        manipulation indicators.
+                    </p>
+
+                </div>
+
+
+                <div class="step">
+
+                    <span>03</span>
+
+                    <h3>
+                        Verification
+                    </h3>
+
+                    <p>
+                        Multiple signals are checked
+                        for authenticity.
+                    </p>
+
+                </div>
+
+
+                <div class="step">
+
+                    <span>04</span>
+
+                    <h3>
+                        Result
+                    </h3>
+
+                    <p>
+                        Receive a clear AI-powered
+                        assessment.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ABOUT -->
+        <section
+            id="about"
+            class="section about">
+
+            <div class="section-label">
+                ABOUT TRUTHLENS AI
+            </div>
+
+            <h2>
+                See Beyond the Surface.
+            </h2>
+
+            <p>
+                TruthLens AI is an experimental AI-powered
+                media verification platform designed to help
+                users identify possible AI-generated,
+                manipulated or suspicious content.
+            </p>
+
+        </section>
+
+    </main>
+
+
+    <!-- FOOTER -->
+    <footer>
+
+        <div class="brand footer-brand">
+
+            <div class="logo">
+                <span class="eye-outer">
+                    <span class="lens"></span>
+                </span>
+            </div>
+
+            TruthLens <b>AI</b>
+
+        </div>
+
+        <p>
+            © 2026 TruthLens AI
+        </p>
+
+    </footer>
+
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>
