@@ -1,185 +1,159 @@
-const fileInput = document.getElementById("fileInput");
-const uploadButton = document.getElementById("uploadButton");
-const analyzeButton = document.getElementById("analyzeButton");
-const fileText = document.getElementById("fileText");
-const loading = document.getElementById("loading");
-const result = document.getElementById("result");
-const againButton = document.getElementById("againButton");
+const WEBHOOK_URL =
+  "https://hashimmughal84.app.n8n.cloud/webhook/truthlens-analyze";
 
+let selectedFile = null;
 
-/* =========================
-   OPEN FILE SELECTOR
-========================= */
+// File input
+const fileInput = document.querySelector('input[type="file"]');
 
-uploadButton.addEventListener("click", function () {
-    fileInput.click();
-});
+// Upload buttons
+const uploadButtons = document.querySelectorAll(
+  'button, .upload-btn, .upload-button'
+);
 
+// Analyze button
+const analyzeButton = Array.from(document.querySelectorAll("button")).find(
+  button => button.textContent.trim().toLowerCase().includes("analyze")
+);
 
-/* =========================
-   FILE SELECTED
-========================= */
+// Result elements
+const resultSection =
+  document.querySelector("#result") ||
+  document.querySelector(".result-section") ||
+  document.querySelector(".results");
 
-fileInput.addEventListener("change", function () {
+// File selection
+if (fileInput) {
+  fileInput.addEventListener("change", function (event) {
+    const file = event.target.files[0];
 
-    if (fileInput.files.length > 0) {
+    if (!file) return;
 
-        const file = fileInput.files[0];
+    selectedFile = file;
 
-        fileText.innerText = file.name;
+    console.log("Selected file:", file.name);
 
+    // Show selected file name
+    const fileNameElement =
+      document.querySelector("#fileName") ||
+      document.querySelector(".file-name");
+
+    if (fileNameElement) {
+      fileNameElement.textContent = file.name;
     }
 
+    // Enable analyze button
+    if (analyzeButton) {
+      analyzeButton.disabled = false;
+    }
+  });
+}
+
+// Upload area click
+uploadButtons.forEach(button => {
+  button.addEventListener("click", function () {
+    if (fileInput) {
+      fileInput.click();
+    }
+  });
 });
 
-
-/* =========================
-   ANALYZE BUTTON
-========================= */
-
-analyzeButton.addEventListener("click", async function () {
-
-    if (!fileInput.files.length) {
-
-        alert("Please upload an image first.");
-
-        return;
-
+// Analyze image
+if (analyzeButton) {
+  analyzeButton.addEventListener("click", async function () {
+    if (!selectedFile) {
+      alert("Please upload an image first.");
+      return;
     }
 
-    const file = fileInput.files[0];
-
-
-    /* SHOW LOADING */
-
-    loading.classList.remove("hidden");
-    result.classList.add("hidden");
-
+    analyzeButton.disabled = true;
+    analyzeButton.textContent = "Analyzing...";
 
     try {
+      // Create FormData
+      const formData = new FormData();
 
-        /* =========================
-           SEND FILE TO n8n
-        ========================= */
+      // IMPORTANT:
+      // This "data" name must match n8n Webhook Binary Property Name
+      formData.append("data", selectedFile);
 
-        const formData = new FormData();
+      // Send image to n8n
+      const response = await fetch(WEBHOOK_URL, {
+        method: "POST",
+        body: formData
+      });
 
-        formData.append("data", file);
-
-
-        const response = await fetch(
-            "https://hashimmughal84.app.n8n.cloud/webhook/truthlens-analyze",
-            {
-                method: "POST",
-                body: formData
-            }
+      if (!response.ok) {
+        throw new Error(
+          `Server error: ${response.status} ${response.statusText}`
         );
+      }
 
+      const result = await response.json();
 
-        if (!response.ok) {
+      console.log("TruthLens AI result:", result);
 
-            throw new Error(
-                "Server error: " + response.status
-            );
-
-        }
-
-
-        /* =========================
-           GET n8n RESULT
-        ========================= */
-
-        const data = await response.json();
-
-        console.log("TruthLens result:", data);
-
-
-        /* HIDE LOADING */
-
-        loading.classList.add("hidden");
-
-
-        /* SHOW RESULT */
-
-        result.classList.remove("hidden");
-
-
-        /* =========================
-           DISPLAY REAL RESULT
-        ========================= */
-
-        document.getElementById("score").innerText =
-            data.real_percentage + "%";
-
-
-        document.getElementById("status").innerText =
-            data.status;
-
-
-        document.getElementById("fakeScore").innerText =
-            data.fake_percentage + "%";
-
-
-        document.getElementById("realScore").innerText =
-            data.real_percentage + "%";
-
-
-        document.getElementById("explanationText").innerText =
-            "TruthLens AI analyzed your uploaded file using AI-powered verification.";
-
+      // Display result
+      showResult(result);
 
     } catch (error) {
+      console.error("TruthLens error:", error);
 
-        console.error(error);
+      alert(
+        "Analysis failed. Please make sure the n8n workflow is active and try again."
+      );
 
-        loading.classList.add("hidden");
-
-        alert(
-            "Analysis failed. Please try again."
-        );
-
+    } finally {
+      analyzeButton.disabled = false;
+      analyzeButton.textContent = "Analyze Now";
     }
+  });
+}
 
-});
 
+// Display AI result
+function showResult(result) {
 
-/* =========================
-   ANALYZE ANOTHER
-========================= */
+  const real = Number(result.real_percentage || 0);
+  const fake = Number(result.fake_percentage || 0);
+  const status = result.status || "Unknown";
 
-againButton.addEventListener("click", function () {
+  // Find result elements
+  const realElement =
+    document.querySelector("#realPercentage") ||
+    document.querySelector(".real-percentage");
 
-    result.classList.add("hidden");
+  const fakeElement =
+    document.querySelector("#fakePercentage") ||
+    document.querySelector(".fake-percentage");
 
-    fileInput.value = "";
+  const statusElement =
+    document.querySelector("#status") ||
+    document.querySelector(".status");
 
-    fileText.innerText =
-        "Ask TruthLens to analyze this file.";
+  if (realElement) {
+    realElement.textContent = `${real.toFixed(2)}%`;
+  }
 
-    window.scrollTo({
-        top: 0,
-        behavior: "smooth"
+  if (fakeElement) {
+    fakeElement.textContent = `${fake.toFixed(2)}%`;
+  }
+
+  if (statusElement) {
+    statusElement.textContent = status;
+  }
+
+  // Show result section
+  if (resultSection) {
+    resultSection.style.display = "block";
+
+    resultSection.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
     });
+  }
 
-});
-
-
-/* =========================
-   QUICK ACTIONS
-========================= */
-
-const quickButtons =
-    document.querySelectorAll(
-        ".quick-actions button"
-    );
-
-
-quickButtons.forEach(function (button) {
-
-    button.addEventListener("click", function () {
-
-        fileInput.click();
-
-    });
-
-});
+  console.log("Real:", real + "%");
+  console.log("Fake:", fake + "%");
+  console.log("Status:", status);
+}
