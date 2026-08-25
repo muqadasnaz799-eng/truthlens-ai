@@ -1,6 +1,6 @@
 // =====================================================
 // TRUTHLENS AI
-// Image Detection + News Verification
+// Image Detection + News Verification + Face Analysis
 // =====================================================
 
 
@@ -13,9 +13,13 @@
 const WEBHOOK_URL =
     "https://hashimmughal84.app.n8n.cloud/webhook/truthlens-analyze";
 
-// NEW NEWS VERIFICATION WEBHOOK
+// NEWS VERIFICATION WEBHOOK
 const NEWS_WEBHOOK_URL =
     "https://hashimmughal84.app.n8n.cloud/webhook/truthlens-news";
+
+// FACE ANALYSIS WEBHOOK
+const FACE_WEBHOOK_URL =
+    "https://hashimmughal84.app.n8n.cloud/webhook-test/truthlens-face";
 
 
 // =====================================================
@@ -95,7 +99,7 @@ fileInput.addEventListener("change", () => {
     }
 
 
-    // Only images for now
+    // Only images for Image + Face Analysis
 
     if (!file.type.startsWith("image/")) {
 
@@ -454,89 +458,119 @@ async function verifyNews() {
         const message =
             data.message ||
             "There is not enough evidence to confidently classify this claim.";
+
+
         // =================================================
-// NEWS SOURCES
-// =================================================
+        // NEWS SOURCES
+        // =================================================
 
-let sourcesBox = document.getElementById("newsSources");
-
-if (!sourcesBox) {
-
-    sourcesBox = document.createElement("div");
-
-    sourcesBox.id = "newsSources";
-
-    sourcesBox.className = "news-sources";
-
-    explanationText.parentElement.after(sourcesBox);
-}
-
-sourcesBox.innerHTML = "";
-
-if (Array.isArray(data.sources) && data.sources.length > 0) {
-
-    const heading = document.createElement("h3");
-
-    heading.textContent = "News Evidence & Sources";
-
-    sourcesBox.appendChild(heading);
-
-    data.sources.forEach(article => {
-
-        if (!article.title) return;
-
-        const sourceItem =
-            document.createElement("div");
-
-        sourceItem.className =
-            "news-source-item";
+        let sourcesBox =
+            document.getElementById("newsSources");
 
 
-        const title =
-            document.createElement("h4");
+        if (!sourcesBox) {
 
-        title.textContent =
-            article.title;
+            sourcesBox =
+                document.createElement("div");
 
+            sourcesBox.id =
+                "newsSources";
 
-        const source =
-            document.createElement("p");
+            sourcesBox.className =
+                "news-sources";
 
-        source.textContent =
-            `${article.source || "Unknown Source"}${article.date ? " • " + article.date : ""}`;
-
-
-        sourceItem.appendChild(title);
-
-        sourceItem.appendChild(source);
-
-
-        if (article.link) {
-
-            const link =
-                document.createElement("a");
-
-            link.href =
-                article.link;
-
-            link.target =
-                "_blank";
-
-            link.rel =
-                "noopener noreferrer";
-
-            link.textContent =
-                "Read Source →";
-
-            sourceItem.appendChild(link);
+            explanationText.parentElement.after(
+                sourcesBox
+            );
 
         }
 
 
-        sourcesBox.appendChild(sourceItem);
+        sourcesBox.innerHTML = "";
 
-    });
-}
+
+        if (
+            Array.isArray(data.sources) &&
+            data.sources.length > 0
+        ) {
+
+            const heading =
+                document.createElement("h3");
+
+            heading.textContent =
+                "News Evidence & Sources";
+
+            sourcesBox.appendChild(
+                heading
+            );
+
+
+            data.sources.forEach(article => {
+
+                if (!article.title) return;
+
+
+                const sourceItem =
+                    document.createElement("div");
+
+                sourceItem.className =
+                    "news-source-item";
+
+
+                const title =
+                    document.createElement("h4");
+
+                title.textContent =
+                    article.title;
+
+
+                const source =
+                    document.createElement("p");
+
+                source.textContent =
+                    `${article.source || "Unknown Source"}${article.date ? " • " + article.date : ""}`;
+
+
+                sourceItem.appendChild(
+                    title
+                );
+
+                sourceItem.appendChild(
+                    source
+                );
+
+
+                if (article.link) {
+
+                    const link =
+                        document.createElement("a");
+
+                    link.href =
+                        article.link;
+
+                    link.target =
+                        "_blank";
+
+                    link.rel =
+                        "noopener noreferrer";
+
+                    link.textContent =
+                        "Read Source →";
+
+                    sourceItem.appendChild(
+                        link
+                    );
+
+                }
+
+
+                sourcesBox.appendChild(
+                    sourceItem
+                );
+
+            });
+
+        }
 
 
         // =================================================
@@ -559,9 +593,6 @@ if (Array.isArray(data.sources) && data.sources.length > 0) {
         status.textContent =
             verdict;
 
-
-        // We don't have separate factual
-        // percentages from the current n8n workflow.
 
         fakeScore.textContent =
             "--";
@@ -617,6 +648,239 @@ if (Array.isArray(data.sources) && data.sources.length > 0) {
 
 
 // =====================================================
+// FACE ANALYSIS
+// =====================================================
+
+async function analyzeFace() {
+
+    const file =
+        fileInput.files[0];
+
+
+    // No image selected
+
+    if (!file) {
+
+        alert(
+            "Please select an image first."
+        );
+
+        fileInput.click();
+
+        return;
+
+    }
+
+
+    // Check image
+
+    if (!file.type.startsWith("image/")) {
+
+        alert(
+            "Please select an image."
+        );
+
+        return;
+
+    }
+
+
+    // Hide previous result
+
+    result.classList.add("hidden");
+
+
+    // Show loading
+
+    loading.classList.remove("hidden");
+
+
+    // Loading text
+
+    const loadingTitle =
+        loading.querySelector("h2");
+
+    const loadingText =
+        loading.querySelector("p");
+
+
+    if (loadingTitle) {
+
+        loadingTitle.textContent =
+            "Analyzing the face...";
+
+    }
+
+
+    if (loadingText) {
+
+        loadingText.textContent =
+            "TruthLens AI is checking the image for possible face manipulation indicators.";
+
+    }
+
+
+    try {
+
+        console.log(
+            "Sending image for face analysis:",
+            file.name
+        );
+
+
+        // Create FormData
+
+        const formData =
+            new FormData();
+
+
+        // IMPORTANT:
+        // Must match n8n Webhook binary field
+
+        formData.append(
+            "data",
+            file
+        );
+
+
+        // Send image to n8n
+
+        const response =
+            await fetch(
+                FACE_WEBHOOK_URL,
+                {
+
+                    method: "POST",
+
+                    body: formData
+
+                }
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                `Face server error: ${response.status}`
+            );
+
+        }
+
+
+        // Get n8n response
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "TruthLens face result:",
+            data
+        );
+
+
+        // =================================================
+        // FACE RESULT
+        // =================================================
+
+        const verdict =
+            data.verdict ||
+            data.label ||
+            "UNCERTAIN";
+
+
+        const confidence =
+            Number(
+                data.confidence ??
+                data.score
+            );
+
+
+        const message =
+            data.message ||
+            "The face analysis has been completed.";
+
+
+        // Confidence
+
+        if (!Number.isNaN(confidence)) {
+
+            score.textContent =
+                confidence.toFixed(0) + "%";
+
+        } else {
+
+            score.textContent =
+                "--";
+
+        }
+
+
+        // Verdict
+
+        status.textContent =
+            verdict;
+
+
+        // Face analysis does not currently
+        // provide separate fake/real percentages
+
+        fakeScore.textContent =
+            "--";
+
+
+        realScore.textContent =
+            "--";
+
+
+        // Explanation
+
+        explanationText.textContent =
+            message;
+
+
+        // Hide loading
+
+        loading.classList.add("hidden");
+
+
+        // Show result
+
+        result.classList.remove("hidden");
+
+
+        // Scroll to result
+
+        result.scrollIntoView({
+
+            behavior: "smooth",
+
+            block: "center"
+
+        });
+
+
+    } catch (error) {
+
+        console.error(
+            "TruthLens face error:",
+            error
+        );
+
+
+        loading.classList.add("hidden");
+
+
+        alert(
+            "Face analysis failed. Please make sure the n8n Face workflow is listening for the test request."
+        );
+
+    }
+
+}
+
+
+// =====================================================
 // QUICK ACTIONS
 // =====================================================
 
@@ -630,7 +894,9 @@ quickActions.forEach(button => {
                 button.dataset.type;
 
 
+            // =================================================
             // IMAGE
+            // =================================================
 
             if (type === "image") {
 
@@ -639,7 +905,9 @@ quickActions.forEach(button => {
             }
 
 
+            // =================================================
             // NEWS
+            // =================================================
 
             else if (type === "news") {
 
@@ -648,18 +916,20 @@ quickActions.forEach(button => {
             }
 
 
+            // =================================================
             // FACE
+            // =================================================
 
             else if (type === "face") {
 
-                alert(
-                    "Face Analysis will be available in the next stage."
-                );
+                analyzeFace();
 
             }
 
 
+            // =================================================
             // VIDEO
+            // =================================================
 
             else if (type === "video") {
 
@@ -706,6 +976,18 @@ againButton.addEventListener("click", () => {
 
     explanationText.textContent =
         "Your analysis will appear here.";
+
+
+    // Remove news sources if present
+
+    const sourcesBox =
+        document.getElementById("newsSources");
+
+    if (sourcesBox) {
+
+        sourcesBox.remove();
+
+    }
 
 
     result.classList.add("hidden");
