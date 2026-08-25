@@ -454,6 +454,89 @@ async function verifyNews() {
         const message =
             data.message ||
             "There is not enough evidence to confidently classify this claim.";
+        // =================================================
+// NEWS SOURCES
+// =================================================
+
+let sourcesBox = document.getElementById("newsSources");
+
+if (!sourcesBox) {
+
+    sourcesBox = document.createElement("div");
+
+    sourcesBox.id = "newsSources";
+
+    sourcesBox.className = "news-sources";
+
+    explanationText.parentElement.after(sourcesBox);
+}
+
+sourcesBox.innerHTML = "";
+
+if (Array.isArray(data.sources) && data.sources.length > 0) {
+
+    const heading = document.createElement("h3");
+
+    heading.textContent = "News Evidence & Sources";
+
+    sourcesBox.appendChild(heading);
+
+    data.sources.forEach(article => {
+
+        if (!article.title) return;
+
+        const sourceItem =
+            document.createElement("div");
+
+        sourceItem.className =
+            "news-source-item";
+
+
+        const title =
+            document.createElement("h4");
+
+        title.textContent =
+            article.title;
+
+
+        const source =
+            document.createElement("p");
+
+        source.textContent =
+            `${article.source || "Unknown Source"}${article.date ? " • " + article.date : ""}`;
+
+
+        sourceItem.appendChild(title);
+
+        sourceItem.appendChild(source);
+
+
+        if (article.link) {
+
+            const link =
+                document.createElement("a");
+
+            link.href =
+                article.link;
+
+            link.target =
+                "_blank";
+
+            link.rel =
+                "noopener noreferrer";
+
+            link.textContent =
+                "Read Source →";
+
+            sourceItem.appendChild(link);
+
+        }
+
+
+        sourcesBox.appendChild(sourceItem);
+
+    });
+}
 
 
         // =================================================
