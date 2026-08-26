@@ -17,7 +17,6 @@ const NEWS_WEBHOOK_URL =
     "https://hashimmughal84.app.n8n.cloud/webhook/truthlens-news";
 
 // FACE ANALYSIS
-// TEST URL - use this while n8n is in Test/Listening mode
 const FACE_WEBHOOK_URL =
     "https://hashimmughal84.app.n8n.cloud/webhook/truthlens-face";
 
@@ -56,16 +55,17 @@ const fakeScore =
 const realScore =
     document.getElementById("realScore");
 
+const faceScore =
+    document.getElementById("faceScore");
+
+const metadataScore =
+    document.getElementById("metadataScore");
+
 const explanationText =
     document.getElementById("explanationText");
 
 const againButton =
     document.getElementById("againButton");
-
-
-// =====================================================
-// QUICK ACTION BUTTONS
-// =====================================================
 
 const quickActions =
     document.querySelectorAll(".quick-actions button");
@@ -94,7 +94,8 @@ if (fileInput) {
 
     fileInput.addEventListener("change", () => {
 
-        const file = fileInput.files[0];
+        const file =
+            fileInput.files[0];
 
         if (!file) {
 
@@ -104,9 +105,6 @@ if (fileInput) {
             return;
 
         }
-
-
-        // Only images
 
         if (!file.type.startsWith("image/")) {
 
@@ -123,11 +121,42 @@ if (fileInput) {
 
         }
 
-
         fileText.textContent =
             file.name;
 
     });
+
+}
+
+
+// =====================================================
+// RESET RESULT
+// =====================================================
+
+function resetResult() {
+
+    result.classList.add("hidden");
+
+    score.textContent =
+        "--";
+
+    status.textContent =
+        "Waiting...";
+
+    fakeScore.textContent =
+        "--";
+
+    realScore.textContent =
+        "--";
+
+    faceScore.textContent =
+        "--";
+
+    metadataScore.textContent =
+        "--";
+
+    explanationText.textContent =
+        "Your analysis will appear here.";
 
 }
 
@@ -145,7 +174,6 @@ if (analyzeButton) {
             const file =
                 fileInput.files[0];
 
-
             if (!file) {
 
                 alert(
@@ -155,7 +183,6 @@ if (analyzeButton) {
                 return;
 
             }
-
 
             if (!file.type.startsWith("image/")) {
 
@@ -167,18 +194,15 @@ if (analyzeButton) {
 
             }
 
-
-            result.classList.add("hidden");
+            resetResult();
 
             loading.classList.remove("hidden");
-
 
             const loadingTitle =
                 loading.querySelector("h2");
 
             const loadingText =
                 loading.querySelector("p");
-
 
             if (loadingTitle) {
 
@@ -187,7 +211,6 @@ if (analyzeButton) {
 
             }
 
-
             if (loadingText) {
 
                 loadingText.textContent =
@@ -195,21 +218,15 @@ if (analyzeButton) {
 
             }
 
-
             try {
 
                 const formData =
                     new FormData();
 
-
-                // IMPORTANT
-                // n8n Webhook binary field = data
-
                 formData.append(
                     "data",
                     file
                 );
-
 
                 const response =
                     await fetch(
@@ -220,7 +237,6 @@ if (analyzeButton) {
                         }
                     );
 
-
                 if (!response.ok) {
 
                     throw new Error(
@@ -229,63 +245,47 @@ if (analyzeButton) {
 
                 }
 
-
                 const data =
                     await response.json();
-
 
                 console.log(
                     "TruthLens image result:",
                     data
                 );
 
-
                 const label =
-                    data.label;
-
+                    data.label ||
+                    data.status ||
+                    "UNCERTAIN";
 
                 const confidence =
                     Number(data.confidence);
 
-
                 const realPercentage =
-                    data.real_percentage !== null &&
-                    data.real_percentage !== undefined
+                    data.real_percentage !== undefined &&
+                    data.real_percentage !== null
                         ? Number(data.real_percentage)
                         : null;
 
-
                 const fakePercentage =
-                    data.fake_percentage !== null &&
-                    data.fake_percentage !== undefined
+                    data.fake_percentage !== undefined &&
+                    data.fake_percentage !== null
                         ? Number(data.fake_percentage)
                         : null;
 
-
-                // Confidence
 
                 if (!Number.isNaN(confidence)) {
 
                     score.textContent =
                         confidence.toFixed(2) + "%";
 
-                } else {
-
-                    score.textContent =
-                        "--";
-
                 }
 
 
-                // Status
-
                 status.textContent =
                     data.status ||
-                    label ||
-                    "Analysis Complete";
+                    label;
 
-
-                // Real percentage
 
                 if (
                     realPercentage !== null &&
@@ -295,15 +295,8 @@ if (analyzeButton) {
                     realScore.textContent =
                         realPercentage.toFixed(2) + "%";
 
-                } else {
-
-                    realScore.textContent =
-                        "--";
-
                 }
 
-
-                // Fake percentage
 
                 if (
                     fakePercentage !== null &&
@@ -313,18 +306,19 @@ if (analyzeButton) {
                     fakeScore.textContent =
                         fakePercentage.toFixed(2) + "%";
 
-                } else {
-
-                    fakeScore.textContent =
-                        "--";
-
                 }
 
 
-                // Explanation
+                faceScore.textContent =
+                    "--";
+
+                metadataScore.textContent =
+                    "--";
+
 
                 if (
-                    String(label).toLowerCase() === "real"
+                    String(label).toLowerCase()
+                        .includes("real")
                 ) {
 
                     explanationText.textContent =
@@ -342,7 +336,6 @@ if (analyzeButton) {
 
                 result.classList.remove("hidden");
 
-
                 result.scrollIntoView({
                     behavior: "smooth",
                     block: "center"
@@ -356,9 +349,7 @@ if (analyzeButton) {
                     error
                 );
 
-
                 loading.classList.add("hidden");
-
 
                 alert(
                     "Image analysis failed. Please try again."
@@ -383,17 +374,14 @@ async function verifyNews() {
             "Enter the news or claim you want TruthLens AI to verify:"
         );
 
-
     if (news === null) {
 
         return;
 
     }
 
-
     const cleanNews =
         news.trim();
-
 
     if (!cleanNews) {
 
@@ -405,18 +393,15 @@ async function verifyNews() {
 
     }
 
-
-    result.classList.add("hidden");
+    resetResult();
 
     loading.classList.remove("hidden");
-
 
     const loadingTitle =
         loading.querySelector("h2");
 
     const loadingText =
         loading.querySelector("p");
-
 
     if (loadingTitle) {
 
@@ -425,14 +410,12 @@ async function verifyNews() {
 
     }
 
-
     if (loadingText) {
 
         loadingText.textContent =
             "TruthLens AI is checking related news and evidence.";
 
     }
-
 
     try {
 
@@ -441,12 +424,10 @@ async function verifyNews() {
             cleanNews
         );
 
-
         const response =
             await fetch(
                 NEWS_WEBHOOK_URL,
                 {
-
                     method: "POST",
 
                     headers: {
@@ -457,10 +438,8 @@ async function verifyNews() {
                     body: JSON.stringify({
                         news: cleanNews
                     })
-
                 }
             );
-
 
         if (!response.ok) {
 
@@ -470,38 +449,28 @@ async function verifyNews() {
 
         }
 
-
         const data =
             await response.json();
-
 
         console.log(
             "TruthLens news result:",
             data
         );
 
-
         const verdict =
             data.verdict ||
             "UNCERTAIN";
 
-
         const confidence =
             Number(data.confidence);
-
 
         const message =
             data.message ||
             "There is not enough evidence to confidently classify this claim.";
 
 
-        // =================================================
-        // NEWS SOURCES
-        // =================================================
-
         let sourcesBox =
             document.getElementById("newsSources");
-
 
         if (!sourcesBox) {
 
@@ -519,7 +488,6 @@ async function verifyNews() {
             );
 
         }
-
 
         sourcesBox.innerHTML = "";
 
@@ -548,7 +516,6 @@ async function verifyNews() {
 
                 }
 
-
                 const sourceItem =
                     document.createElement("div");
 
@@ -573,7 +540,6 @@ async function verifyNews() {
                 sourceItem.appendChild(
                     title
                 );
-
 
                 sourceItem.appendChild(
                     source
@@ -603,7 +569,6 @@ async function verifyNews() {
 
                 }
 
-
                 sourcesBox.appendChild(
                     sourceItem
                 );
@@ -613,19 +578,10 @@ async function verifyNews() {
         }
 
 
-        // =================================================
-        // DISPLAY NEWS RESULT
-        // =================================================
-
         if (!Number.isNaN(confidence)) {
 
             score.textContent =
                 confidence.toFixed(0) + "%";
-
-        } else {
-
-            score.textContent =
-                "--";
 
         }
 
@@ -633,14 +589,17 @@ async function verifyNews() {
         status.textContent =
             verdict;
 
-
         fakeScore.textContent =
             "--";
-
 
         realScore.textContent =
             "--";
 
+        faceScore.textContent =
+            "--";
+
+        metadataScore.textContent =
+            "--";
 
         explanationText.textContent =
             message;
@@ -649,7 +608,6 @@ async function verifyNews() {
         loading.classList.add("hidden");
 
         result.classList.remove("hidden");
-
 
         result.scrollIntoView({
             behavior: "smooth",
@@ -664,9 +622,7 @@ async function verifyNews() {
             error
         );
 
-
         loading.classList.add("hidden");
-
 
         alert(
             "News verification failed. Please make sure the n8n workflow is active and try again."
@@ -686,9 +642,6 @@ async function analyzeFace() {
     const file =
         fileInput.files[0];
 
-
-    // No image
-
     if (!file) {
 
         alert(
@@ -701,9 +654,6 @@ async function analyzeFace() {
 
     }
 
-
-    // Check image
-
     if (!file.type.startsWith("image/")) {
 
         alert(
@@ -714,18 +664,15 @@ async function analyzeFace() {
 
     }
 
-
-    result.classList.add("hidden");
+    resetResult();
 
     loading.classList.remove("hidden");
-
 
     const loadingTitle =
         loading.querySelector("h2");
 
     const loadingText =
         loading.querySelector("p");
-
 
     if (loadingTitle) {
 
@@ -734,11 +681,10 @@ async function analyzeFace() {
 
     }
 
-
     if (loadingText) {
 
         loadingText.textContent =
-            "TruthLens AI is checking the image for possible face manipulation indicators.";
+            "TruthLens AI is checking the image.";
 
     }
 
@@ -751,16 +697,8 @@ async function analyzeFace() {
         );
 
 
-        // =================================================
-        // CREATE FORM DATA
-        // =================================================
-
         const formData =
             new FormData();
-
-
-        // IMPORTANT
-        // n8n Webhook binary field = data
 
         formData.append(
             "data",
@@ -768,19 +706,12 @@ async function analyzeFace() {
         );
 
 
-        // =================================================
-        // SEND TO FACE N8N WORKFLOW
-        // =================================================
-
         const response =
             await fetch(
                 FACE_WEBHOOK_URL,
                 {
-
                     method: "POST",
-
                     body: formData
-
                 }
             );
 
@@ -794,10 +725,6 @@ async function analyzeFace() {
         }
 
 
-        // =================================================
-        // GET N8N RESPONSE
-        // =================================================
-
         const data =
             await response.json();
 
@@ -807,10 +734,6 @@ async function analyzeFace() {
             data
         );
 
-
-        // =================================================
-        // FACE RESULT
-        // =================================================
 
         const verdict =
             data.verdict ||
@@ -827,15 +750,27 @@ async function analyzeFace() {
             );
 
 
+        const realPercentage =
+            data.real_percentage !== undefined &&
+            data.real_percentage !== null
+                ? Number(data.real_percentage)
+                : null;
+
+
+        const fakePercentage =
+            data.fake_percentage !== undefined &&
+            data.fake_percentage !== null
+                ? Number(data.fake_percentage)
+                : null;
+
+
         const message =
             data.message ||
             data.explanation ||
             "The face analysis has been completed.";
 
 
-        // =================================================
-        // DISPLAY CONFIDENCE
-        // =================================================
+        // MAIN SCORE
 
         if (!Number.isNaN(confidence)) {
 
@@ -850,43 +785,21 @@ async function analyzeFace() {
         }
 
 
-        // =================================================
-        // DISPLAY VERDICT
-        // =================================================
+        // VERDICT
 
         status.textContent =
             verdict;
 
 
-        // =================================================
-        // FACE REAL / FAKE PERCENTAGES
-        // =================================================
+        // AI DETECTION = FAKE %
 
         if (
-            data.real_percentage !== undefined &&
-            data.real_percentage !== null
-        ) {
-
-            realScore.textContent =
-                Number(data.real_percentage)
-                    .toFixed(2) + "%";
-
-        } else {
-
-            realScore.textContent =
-                "--";
-
-        }
-
-
-        if (
-            data.fake_percentage !== undefined &&
-            data.fake_percentage !== null
+            fakePercentage !== null &&
+            !Number.isNaN(fakePercentage)
         ) {
 
             fakeScore.textContent =
-                Number(data.fake_percentage)
-                    .toFixed(2) + "%";
+                fakePercentage.toFixed(2) + "%";
 
         } else {
 
@@ -896,17 +809,54 @@ async function analyzeFace() {
         }
 
 
-        // =================================================
+        // LIKELY REAL = REAL %
+
+        if (
+            realPercentage !== null &&
+            !Number.isNaN(realPercentage)
+        ) {
+
+            realScore.textContent =
+                realPercentage.toFixed(2) + "%";
+
+        } else {
+
+            realScore.textContent =
+                "--";
+
+        }
+
+
+        // FACE ANALYSIS = MAIN CONFIDENCE
+
+        if (faceScore) {
+
+            if (!Number.isNaN(confidence)) {
+
+                faceScore.textContent =
+                    confidence.toFixed(2) + "%";
+
+            } else {
+
+                faceScore.textContent =
+                    "--";
+
+            }
+
+        }
+
+
+        // METADATA
+
+        metadataScore.textContent =
+            "--";
+
+
         // EXPLANATION
-        // =================================================
 
         explanationText.textContent =
             message;
 
-
-        // =================================================
-        // SHOW RESULT
-        // =================================================
 
         loading.classList.add("hidden");
 
@@ -926,12 +876,10 @@ async function analyzeFace() {
             error
         );
 
-
         loading.classList.add("hidden");
 
-
         alert(
-            "Face analysis failed. Please make sure the n8n Face workflow is listening for the test request."
+            "Face analysis failed. Please make sure the n8n Face workflow is active and try again."
         );
 
     }
@@ -953,16 +901,11 @@ quickActions.forEach(button => {
                 button.dataset.type;
 
 
-            // IMAGE
-
             if (type === "image") {
 
                 fileInput.click();
 
             }
-
-
-            // NEWS
 
             else if (type === "news") {
 
@@ -970,17 +913,11 @@ quickActions.forEach(button => {
 
             }
 
-
-            // FACE
-
             else if (type === "face") {
 
                 analyzeFace();
 
             }
-
-
-            // VIDEO
 
             else if (type === "video") {
 
@@ -1008,46 +945,10 @@ if (againButton) {
 
             fileInput.value = "";
 
-
             fileText.textContent =
                 "Ask TruthLens to analyze this file";
 
-
-            score.textContent =
-                "--";
-
-
-            status.textContent =
-                "Waiting...";
-
-
-            fakeScore.textContent =
-                "--";
-
-
-            realScore.textContent =
-                "--";
-
-
-            explanationText.textContent =
-                "Your analysis will appear here.";
-
-
-            // Remove news sources
-
-            const sourcesBox =
-                document.getElementById("newsSources");
-
-
-            if (sourcesBox) {
-
-                sourcesBox.remove();
-
-            }
-
-
-            result.classList.add("hidden");
-
+            resetResult();
 
             window.scrollTo({
 
