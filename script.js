@@ -19,7 +19,7 @@ const NEWS_WEBHOOK_URL =
 // FACE ANALYSIS
 // TEST URL - use this while n8n is in Test/Listening mode
 const FACE_WEBHOOK_URL =
-    "https://hashimmughal84.app.n8n.cloud/webhook-test/truthlens-face";
+    "https://hashimmughal84.app.n8n.cloud/webhook/truthlens-face";
 
 
 // =====================================================
